@@ -32,8 +32,7 @@ class _FormSectionState extends State<FormSection> {
   TextEditingController mailController = TextEditingController();
 
   Future getImageGallery() async {
-    final XFile? pickedFile =
-        await picker.pickImage(source: ImageSource.gallery);
+    XFile? pickedFile = await picker.pickImage(source: ImageSource.gallery);
 
     setState(() {
       if (pickedFile != null) {
@@ -44,8 +43,64 @@ class _FormSectionState extends State<FormSection> {
     });
   }
 
-  Future sendImageStorage(UserCredential value) async {
-    
+  signUp(pseudo, mail, password, image) {
+    try {
+      auth
+          .createUserWithEmailAndPassword(
+              email: mail.text.trim(), password: password.text.trim())
+          .then((value) {
+        try {
+          registerUserToFirestore(value, pseudo);
+        } catch (e) {
+          print('Error Create User Firestore : $e');
+        }
+
+        try {
+          auth
+              .signInWithEmailAndPassword(
+                  email: mail.text.trim(), password: password.text.trim())
+              .then((value) async {
+            registerImageToStorage(value, image);
+          }).catchError((e) {
+            print('Error SignIn Auth : ${e.error}');
+          });
+        } catch (e) {
+          print('Erreur Auth SignIn : $e');
+        }
+      }).catchError((e) {
+        print('Error Create User Auth : ${e.error}');
+      });
+    } catch (e) {
+      print('Erreur Global SignUp : $e');
+    }
+  }
+
+  registerUserToFirestore(value, pseudo) {
+    try {
+      firestore.collection('users').doc(value.user!.uid).set({
+        "pseudo": pseudo.text.trim(),
+      }).catchError((e) {
+        print(e.error);
+      });
+    } catch (e) {
+      print('Erreur Firestore Create User : $e');
+    }
+  }
+
+  registerImageToStorage(value, image) async {
+    try {
+      Reference storageRef = storage
+          .ref('users')
+          .child(value.user!.uid)
+          .child('profil')
+          .child('avatar.png');
+
+      UploadTask uploadTask = storageRef.putFile(image!);
+
+      await uploadTask.whenComplete(() => print('File Uploaded'));
+    } catch (e) {
+      print('Erreur Storage Create User : $e');
+    }
   }
 
   @override
@@ -148,30 +203,8 @@ class _FormSectionState extends State<FormSection> {
                 ),
               ),
               onPressed: () {
-                auth
-                  .createUserWithEmailAndPassword(
-                    email: mailController.text.trim(),
-                    password: passwordController.text.trim())
-                  .then((value) {
-                    firestore.collection('users').doc(value.user!.uid).set({
-                      "pseudo": pseudoController.text.trim(),
-                    });
-                  
-                    auth
-                    .signInWithEmailAndPassword(
-                      email: mailController.text.trim(),
-                      password: passwordController.text.trim())
-                    .then((value) async {
-                      Reference storageRef =
-                        storage.ref('users').child(value.user!.uid).child('profil').child('avatar.png');
-                      UploadTask uploadTask = storageRef.putFile(_image!);
-                      await uploadTask.whenComplete(() => print('File Uploaded'));
-                    }).catchError((e) {
-                      print(e.error);
-                    });
-                  }).catchError((e) {
-                    print(e.error);
-                  });
+                signUp(pseudoController, mailController, passwordController,
+                    _image);
               },
             ),
           ],
