@@ -87,7 +87,7 @@ class _FormSectionState extends State<FormSection> {
     }
   }
 
-  registerImageToStorage(value, image) async {
+  Future registerImageToStorage(value, image) async {
     try {
       Reference storageRef = storage
           .ref('users')

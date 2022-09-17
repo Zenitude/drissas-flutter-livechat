@@ -1,6 +1,6 @@
 // ignore_for_file: avoid_print, invalid_return_type_for_catch_error
 
-library appbar_connected_widget;
+library appbar_contacts_widget;
 
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -45,6 +45,16 @@ class _MyAppBarContactsState extends State<MyAppBarContacts> {
     }).catchError((e) => print(e.error));
   }
 
+  refreshPage(context) {
+    Navigator.pushReplacement(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (_, __, ___) => const ProfilPage(),
+        transitionDuration: const Duration(seconds: 0),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return AppBar(
@@ -69,7 +79,10 @@ class _MyAppBarContactsState extends State<MyAppBarContacts> {
                       width: 50,
                       height: 50,
                       child: urlImgUser == null
-                          ? const Icon(Icons.person, color: Colors.white,)
+                          ? const Icon(
+                              Icons.person,
+                              color: Colors.white,
+                            )
                           : CircleAvatar(
                               backgroundImage: NetworkImage(urlImgUser!),
                             ),
@@ -92,9 +105,12 @@ class _MyAppBarContactsState extends State<MyAppBarContacts> {
             return const Text('Erreur Pseudo');
           })),
       backgroundColor: Colors.amber,
-      actions: 
-      [
-        IconButton(onPressed: () {}, icon: const Icon(Icons.refresh)),
+      actions: [
+        IconButton(
+            onPressed: () {
+              refreshPage(context);
+            },
+            icon: const Icon(Icons.refresh)),
         IconButton(
             onPressed: () {
               auth.signOut();
